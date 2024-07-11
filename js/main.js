@@ -187,12 +187,12 @@ const saturnBuffers = initBuffers(gl, saturnData);  // Buffers for Saturn
 const saturnTexture = loadTexture(gl, 'image/2k_saturn.jpg');  // Placeholder texture for Saturn
 
 const saturnRingTexture = loadTexture(gl, 'image/2k_saturn_ring_alpha.png');  // Path to your ring texture
-const saturnRingInnerRadius = 0.8;
+const saturnRingInnerRadius = 1.2;
 const saturnRingOuterRadius = 1.6;
-const saturnRingSegments = 100;
-const saturnRingData = createThinRing(saturnRingInnerRadius, saturnRingOuterRadius, saturnRingSegments);
+const saturnRingSegments = 50;
+const saturnRingRings = 20;  // Number of concentric rings
+const saturnRingData = createRealisticRing(saturnRingInnerRadius, saturnRingOuterRadius, saturnRingSegments, saturnRingRings);
 const saturnRingBuffers = initBuffers(gl, saturnRingData);
-
 
 const uranusData = createSphere(50, 50);  // Data for Uranus
 const uranusBuffers = initBuffers(gl, uranusData);  // Buffers for Uranus
@@ -333,35 +333,31 @@ function render(now) {
     requestAnimationFrame(render); // Continue to animate the frame
 }
 
-function createThinRing(innerRadius, outerRadius, segments) {
+function createRealisticRing(innerRadius, outerRadius, segments, rings) {
     const positions = [];
     const textureCoords = [];
     const indices = [];
 
     const step = 2 * Math.PI / segments;
+    const ringStep = (outerRadius - innerRadius) / rings;
 
-    for (let i = 0; i <= segments; i++) {
-        const angle = i * step;
+    for (let r = 0; r <= rings; r++) {
+        const radius = innerRadius + r * ringStep;
+        for (let i = 0; i <= segments; i++) {
+            const angle = i * step;
+            const x = radius * Math.cos(angle);
+            const z = radius * Math.sin(angle);
 
-        const xInner = innerRadius * Math.cos(angle);
-        const zInner = innerRadius * Math.sin(angle);
-        const xOuter = outerRadius * Math.cos(angle);
-        const zOuter = outerRadius * Math.sin(angle);
+            positions.push(x, 0.0, z);
+            textureCoords.push(i / segments, r / rings);
 
-        positions.push(xInner, 0.0, zInner);
-        positions.push(xOuter, 0.0, zOuter);
+            if (r < rings && i < segments) {
+                const first = r * (segments + 1) + i;
+                const second = first + segments + 1;
 
-        textureCoords.push(i / segments, 1.0);
-        textureCoords.push(i / segments, 0.0);
-
-        if (i < segments) {
-            const first = i * 2;
-            const second = first + 1;
-            const third = first + 2;
-            const fourth = first + 3;
-
-            indices.push(first, second, third);
-            indices.push(second, fourth, third);
+                indices.push(first, second, first + 1);
+                indices.push(second, second + 1, first + 1);
+            }
         }
     }
 
@@ -692,10 +688,10 @@ function drawScene() {
     mat4.translate(modelViewMatrixSaturn, modelViewMatrixSaturn, saturnPosition);  // Translate Saturn to its position
     drawPlanet(gl, programInfo, saturnBuffers, saturnTexture, modelViewMatrixSaturn, projectionMatrix, sunPosition, 0.6, saturnRotationAngle, mercuryEmissionColor);  // Draw Saturn
 
-    const modelViewMatrixRing = mat4.clone(modelViewMatrixSaturn);
-    mat4.rotate(modelViewMatrixRing, modelViewMatrixRing, Math.PI / 2, [1, 0, 0]);  // Rotate ring to be horizontal
+    // Draw Saturn's ring
+    const modelViewMatrixRing = mat4.clone(modelViewMatrixSaturn);  // Rotate ring to be horizontal
     drawRing(gl, programInfo, saturnRingBuffers, saturnRingTexture, modelViewMatrixRing, projectionMatrix);  // Draw Saturn's ring
-
+    
     // Draw Uranus without emission
     const uranusPosition = [
         uranusOrbitRadius * Math.cos(uranusOrbitAngle),

@@ -174,6 +174,10 @@ const earthData = createSphere(50, 50);  // Data for Earth
 const earthBuffers = initBuffers(gl, earthData);  // Buffers for Earth
 const earthTexture = loadTexture(gl, 'image/2k_earth_daymap.jpg');  // Placeholder texture for Earth
 
+const moonTexture = loadTexture(gl, 'image/2k_moon.jpg');  // Path to your Moon texture
+const moonData = createSphere(30, 30);  // Data for the Moon
+const moonBuffers = initBuffers(gl, moonData);  // Buffers for the Moon
+
 const marsData = createSphere(50, 50);  // Data for Mars
 const marsBuffers = initBuffers(gl, marsData);  // Buffers for Mars
 const marsTexture = loadTexture(gl, 'image/2k_mars.jpg');  // Placeholder texture for Mars
@@ -298,6 +302,39 @@ let saturnOrbitRadius = 12.58 * 2;  // Initial distance of Saturn from the Sun
 let uranusOrbitRadius = 15.14 * 2;  // Initial distance of Uranus from the Sun
 let neptuneOrbitRadius = 20.28 * 2;  // Initial distance of Neptune from the Sun
 
+let moonOrbitAngle = 0;  // Angle for Moon's orbit around the Earth
+let moonRotationAngle = 0;  // Angle for Moon's self-rotation
+const moonOrbitRadius = 0.5;  // Distance of the Moon from the Earth
+const moonOrbitSpeed = 0.005;  // Speed of the Moon's orbit (radians per second)
+const moonRotationSpeed = 0.01;  // Speed of the Moon's self-rotation (radians per second)
+
+const asteroidTextures = [
+    loadTexture(gl, 'image/asteoride.jpg'),
+    loadTexture(gl, 'image/asteoride1.jpg'),
+    loadTexture(gl, 'image/asteoride2.jpg')
+];
+const asteroidData = createSphere(10, 10);  // Data for an asteroid
+const asteroidBuffers = initBuffers(gl, asteroidData);  // Buffers for the asteroid
+
+const numAsteroids = 500;
+const asteroids = [];
+
+const asteroidBeltInnerRadius = marsOrbitRadius + 2.0;
+const asteroidBeltOuterRadius = jupiterOrbitRadius - 2.0;
+
+for (let i = 0; i < numAsteroids; i++) {
+    const angle = Math.random() * 2 * Math.PI;
+    const radius = asteroidBeltInnerRadius + Math.random() * (asteroidBeltOuterRadius - asteroidBeltInnerRadius);
+    const size = 0.05 + Math.random() * 0.1;  // Random size between 0.05 and 0.15
+
+    asteroids.push({
+        angle: angle,
+        radius: radius,
+        size: size,
+        texture: asteroidTextures[Math.floor(Math.random() * asteroidTextures.length)]
+    });
+}
+
 function render(now) {
     now *= 0.001;  // Convert to seconds
     const deltaTime = now - then;
@@ -328,10 +365,15 @@ function render(now) {
     neptuneOrbitAngle += neptuneOrbitSpeed * deltaTime;
     neptuneRotationAngle += neptuneRotationSpeed * deltaTime;
 
+    // Update the angles for the Moon's orbit and self-rotation
+    moonOrbitAngle += moonOrbitSpeed * deltaTime;
+    moonRotationAngle += moonRotationSpeed * deltaTime;
+
     drawScene(); // Redraw the scene
 
     requestAnimationFrame(render); // Continue to animate the frame
 }
+
 
 function createRealisticRing(innerRadius, outerRadius, segments, rings) {
     const positions = [];
@@ -583,32 +625,32 @@ function drawScene() {
     drawCircle(gl, orbitProgramInfo, venusCircleBuffer, modelViewMatrix, projectionMatrix);
 
     // Draw the orbit of Earth
-    const earthCircleData = createCircle(earthOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    const earthCircleData = createCircle(earthOrbitRadius, 100);  // Adjust radius based on Earth's distance from the Sun
     const earthCircleBuffer = initCircleBuffer(gl, earthCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, earthCircleBuffer, modelViewMatrix, projectionMatrix);
 
     // Draw the orbit of Mars
-    const marsCircleData = createCircle(marsOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    const marsCircleData = createCircle(marsOrbitRadius, 100);  // Adjust radius based on Mars's distance from the Sun
     const marsCircleBuffer = initCircleBuffer(gl, marsCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, marsCircleBuffer, modelViewMatrix, projectionMatrix);
 
     // Draw the orbit of Jupiter
-    const jupiterCircleData = createCircle(jupiterOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    const jupiterCircleData = createCircle(jupiterOrbitRadius, 100);  // Adjust radius based on Jupiter's distance from the Sun
     const jupiterCircleBuffer = initCircleBuffer(gl, jupiterCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, jupiterCircleBuffer, modelViewMatrix, projectionMatrix);
     
     // Draw the orbit of Saturn
-    const saturnCircleData = createCircle(saturnOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    const saturnCircleData = createCircle(saturnOrbitRadius, 100);  // Adjust radius based on Saturn's distance from the Sun
     const saturnCircleBuffer = initCircleBuffer(gl, saturnCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, saturnCircleBuffer, modelViewMatrix, projectionMatrix);
 
     // Draw the orbit of Uranus
-    const uranusCircleData = createCircle(uranusOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    const uranusCircleData = createCircle(uranusOrbitRadius, 100);  // Adjust radius based on Uranus's distance from the Sun
     const uranusCircleBuffer = initCircleBuffer(gl, uranusCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, uranusCircleBuffer, modelViewMatrix, projectionMatrix);
 
-    // Draw the orbit of Saturn
-    const neptuneCircleData = createCircle(neptuneOrbitRadius, 100);  // Adjust radius based on Venus's distance from the Sun
+    // Draw the orbit of Neptune
+    const neptuneCircleData = createCircle(neptuneOrbitRadius, 100);  // Adjust radius based on Neptune's distance from the Sun
     const neptuneCircleBuffer = initCircleBuffer(gl, neptuneCircleData);  // Initialize buffer with the new circle data
     drawCircle(gl, orbitProgramInfo, neptuneCircleBuffer, modelViewMatrix, projectionMatrix);
 
@@ -646,38 +688,49 @@ function drawScene() {
         earthOrbitRadius * Math.cos(earthOrbitAngle),
         0.0,
         earthOrbitRadius * Math.sin(earthOrbitAngle)
-    ];  // Calculate Venus's position
+    ];  // Calculate Earth's position
 
-    const modelViewMatrixearth = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixearth, modelViewMatrixearth, earthPosition);  // Translate Venus to its position
+    const modelViewMatrixEarth = mat4.clone(modelViewMatrix);
+    mat4.translate(modelViewMatrixEarth, modelViewMatrixEarth, earthPosition);  // Translate Earth to its position
 
-    drawPlanet(gl, programInfo, earthBuffers, earthTexture, modelViewMatrixearth, projectionMatrix, sunPositionTransformed, 0.4, earthRotationAngle, mercuryEmissionColor);  // Adjust size for Venus, apply rotation, grey emission
+    drawPlanet(gl, programInfo, earthBuffers, earthTexture, modelViewMatrixEarth, projectionMatrix, sunPositionTransformed, 0.4, earthRotationAngle, mercuryEmissionColor);  // Adjust size for Earth, apply rotation, grey emission
 
+    // Draw the Moon
+    const moonPosition = [
+        moonOrbitRadius * Math.cos(moonOrbitAngle),
+        0.0,
+        moonOrbitRadius * Math.sin(moonOrbitAngle)
+    ];  // Calculate Moon's position relative to Earth
+
+    const modelViewMatrixMoon = mat4.clone(modelViewMatrixEarth);
+    mat4.translate(modelViewMatrixMoon, modelViewMatrixMoon, moonPosition);  // Translate Moon to its position
+    drawPlanet(gl, programInfo, moonBuffers, moonTexture, modelViewMatrixMoon, projectionMatrix, sunPositionTransformed, 0.1, moonRotationAngle, mercuryEmissionColor);  // Draw Moon
+    
     // Draw Mars without emission
     const marsPosition = [
         marsOrbitRadius * Math.cos(marsOrbitAngle),
         0.0,
         marsOrbitRadius * Math.sin(marsOrbitAngle)
-    ];  // Calculate Venus's position
+    ];  // Calculate Mars's position
 
-    const modelViewMatrixmars = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixmars, modelViewMatrixmars, marsPosition);  // Translate Venus to its position
+    const modelViewMatrixMars = mat4.clone(modelViewMatrix);
+    mat4.translate(modelViewMatrixMars, modelViewMatrixMars, marsPosition);  // Translate Mars to its position
 
-    drawPlanet(gl, programInfo, marsBuffers, marsTexture, modelViewMatrixmars, projectionMatrix, sunPositionTransformed, 0.4, marsRotationAngle, mercuryEmissionColor);  // Adjust size for Venus, apply rotation, grey emission
+    drawPlanet(gl, programInfo, marsBuffers, marsTexture, modelViewMatrixMars, projectionMatrix, sunPositionTransformed, 0.4, marsRotationAngle, mercuryEmissionColor);  // Adjust size for Mars, apply rotation, grey emission
 
     // Draw Jupiter without emission
     const jupiterPosition = [
         jupiterOrbitRadius * Math.cos(jupiterOrbitAngle),
         0.0,
         jupiterOrbitRadius * Math.sin(jupiterOrbitAngle)
-    ];  // Calculate Venus's position
+    ];  // Calculate Jupiter's position
 
-    const modelViewMatrixjupiter = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixjupiter, modelViewMatrixjupiter, jupiterPosition);  // Translate Venus to its position
+    const modelViewMatrixJupiter = mat4.clone(modelViewMatrix);
+    mat4.translate(modelViewMatrixJupiter, modelViewMatrixJupiter, jupiterPosition);  // Translate Jupiter to its position
 
-    drawPlanet(gl, programInfo, jupiterBuffers, jupiterTexture, modelViewMatrixjupiter, projectionMatrix, sunPositionTransformed, 0.7, jupiterRotationAngle, mercuryEmissionColor);  // Adjust size for Venus, apply rotation, grey emission
+    drawPlanet(gl, programInfo, jupiterBuffers, jupiterTexture, modelViewMatrixJupiter, projectionMatrix, sunPositionTransformed, 0.7, jupiterRotationAngle, mercuryEmissionColor);  // Adjust size for Jupiter, apply rotation, grey emission
 
-    // Draw Saturn's ring
+    // Draw Saturn
     const saturnPosition = [
         saturnOrbitRadius * Math.cos(saturnOrbitAngle),
         0.0,
@@ -686,10 +739,10 @@ function drawScene() {
 
     const modelViewMatrixSaturn = mat4.clone(modelViewMatrix);
     mat4.translate(modelViewMatrixSaturn, modelViewMatrixSaturn, saturnPosition);  // Translate Saturn to its position
-    drawPlanet(gl, programInfo, saturnBuffers, saturnTexture, modelViewMatrixSaturn, projectionMatrix, sunPosition, 0.6, saturnRotationAngle, mercuryEmissionColor);  // Draw Saturn
+    drawPlanet(gl, programInfo, saturnBuffers, saturnTexture, modelViewMatrixSaturn, projectionMatrix, sunPositionTransformed, 0.6, saturnRotationAngle, mercuryEmissionColor);  // Draw Saturn
 
     // Draw Saturn's ring
-    const modelViewMatrixRing = mat4.clone(modelViewMatrixSaturn);  // Rotate ring to be horizontal
+    const modelViewMatrixRing = mat4.clone(modelViewMatrixSaturn);  
     drawRing(gl, programInfo, saturnRingBuffers, saturnRingTexture, modelViewMatrixRing, projectionMatrix);  // Draw Saturn's ring
     
     // Draw Uranus without emission
@@ -697,24 +750,37 @@ function drawScene() {
         uranusOrbitRadius * Math.cos(uranusOrbitAngle),
         0.0,
         uranusOrbitRadius * Math.sin(uranusOrbitAngle)
-    ];  // Calculate Venus's position
+    ];  // Calculate Uranus's position
 
-    const modelViewMatrixuranus = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixuranus, modelViewMatrixuranus, uranusPosition);  // Translate Venus to its position
+    const modelViewMatrixUranus = mat4.clone(modelViewMatrix);
+    mat4.translate(modelViewMatrixUranus, modelViewMatrixUranus, uranusPosition);  // Translate Uranus to its position
 
-    drawPlanet(gl, programInfo, uranusBuffers, uranusTexture, modelViewMatrixuranus, projectionMatrix, sunPositionTransformed, 0.5, uranusRotationAngle, mercuryEmissionColor);  // Adjust size for Venus, apply rotation, grey emission
+    drawPlanet(gl, programInfo, uranusBuffers, uranusTexture, modelViewMatrixUranus, projectionMatrix, sunPositionTransformed, 0.5, uranusRotationAngle, mercuryEmissionColor);  // Adjust size for Uranus, apply rotation, grey emission
 
     // Draw Neptune without emission
     const neptunePosition = [
         neptuneOrbitRadius * Math.cos(neptuneOrbitAngle),
         0.0,
         neptuneOrbitRadius * Math.sin(neptuneOrbitAngle)
-    ];  // Calculate Venus's position
+    ];  // Calculate Neptune's position
 
-    const modelViewMatrixneptune = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixneptune, modelViewMatrixneptune, neptunePosition);  // Translate Venus to its position
+    const modelViewMatrixNeptune = mat4.clone(modelViewMatrix);
+    mat4.translate(modelViewMatrixNeptune, modelViewMatrixNeptune, neptunePosition);  // Translate Neptune to its position
 
-    drawPlanet(gl, programInfo, neptuneBuffers, neptuneTexture, modelViewMatrixneptune, projectionMatrix, sunPositionTransformed, 0.5, neptuneRotationAngle, mercuryEmissionColor);  // Adjust size for Venus, apply rotation, grey emission
+    drawPlanet(gl, programInfo, neptuneBuffers, neptuneTexture, modelViewMatrixNeptune, projectionMatrix, sunPositionTransformed, 0.5, neptuneRotationAngle, mercuryEmissionColor);  // Adjust size for Neptune, apply rotation, grey emission
+
+    // Draw the asteroid belt
+    for (const asteroid of asteroids) {
+        const asteroidPosition = [
+            asteroid.radius * Math.cos(asteroid.angle),
+            0.0,
+            asteroid.radius * Math.sin(asteroid.angle)
+        ];
+
+        const modelViewMatrixAsteroid = mat4.clone(modelViewMatrix);
+        mat4.translate(modelViewMatrixAsteroid, modelViewMatrixAsteroid, asteroidPosition);
+        drawPlanet(gl, programInfo, asteroidBuffers, asteroid.texture, modelViewMatrixAsteroid, projectionMatrix, sunPositionTransformed, asteroid.size, 0, mercuryEmissionColor);  // Draw each asteroid
+    }
 }
 
 function drawOrbit(radius) {

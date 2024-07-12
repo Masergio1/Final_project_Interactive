@@ -35,7 +35,7 @@ const vsSource = `
 `;
 
 
-// Fragment shader source (updated with float precision)
+// Fragment shader source
 const fsSource = `
     precision highp float;
 
@@ -80,7 +80,7 @@ const programInfo = {
         uNormalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
         uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
         uSunPosition: gl.getUniformLocation(shaderProgram, 'uSunPosition'),
-        uEmissionColor: gl.getUniformLocation(shaderProgram, 'uEmissionColor'),  // New uniform for light emission
+        uEmissionColor: gl.getUniformLocation(shaderProgram, 'uEmissionColor'),
     },
 };
 
@@ -154,68 +154,67 @@ const backgroundProgramInfo = {
     },
 };
 
-const backgroundTexture = loadTexture(gl, 'image/2k_stars_milky_way.jpg');  // Path to your background texture
-const backgroundData = createBackgroundSphere(50, 50);  // Create the background sphere data
-const backgroundBuffers = initBuffers(gl, backgroundData);  // Initialize the buffers for the background sphere
+const backgroundTexture = loadTexture(gl, 'image/2k_stars_milky_way.jpg');
+const backgroundData = createBackgroundSphere(50, 50);
+const backgroundBuffers = initBuffers(gl, backgroundData);
 
-const sunData = createSphere(100, 100);  // Data for the Sun
-const sunBuffers = initBuffers(gl, sunData);  // Buffers for the Sun
-const sunTexture = loadTexture(gl, 'image/2k_sun.jpg');  // Texture for the Sun
+const sunData = createSphere(100, 100);
+const sunBuffers = initBuffers(gl, sunData);
+const sunTexture = loadTexture(gl, 'image/2k_sun.jpg');
 
-const mercuryData = createSphere(50, 50);  // Data for Mercury
-const mercuryBuffers = initBuffers(gl, mercuryData);  // Buffers for Mercury
-const mercuryTexture = loadTexture(gl, 'image/2k_mercury.jpg');  // Placeholder texture for Mercury
+const mercuryData = createSphere(50, 50);
+const mercuryBuffers = initBuffers(gl, mercuryData);
+const mercuryTexture = loadTexture(gl, 'image/2k_mercury.jpg');
 
-const venusData = createSphere(50, 50);  // Data for Mercury
-const venusBuffers = initBuffers(gl, venusData);  // Buffers for Mercury
-const venusTexture = loadTexture(gl, 'image/2k_venus_surface.jpg');  // Placeholder texture for Mercury
+const venusData = createSphere(50, 50);
+const venusBuffers = initBuffers(gl, venusData);
+const venusTexture = loadTexture(gl, 'image/2k_venus_surface.jpg');
 
-const earthData = createSphere(50, 50);  // Data for Earth
-const earthBuffers = initBuffers(gl, earthData);  // Buffers for Earth
-const earthTexture = loadTexture(gl, 'image/2k_earth_daymap.jpg');  // Placeholder texture for Earth
+const earthData = createSphere(50, 50);
+const earthBuffers = initBuffers(gl, earthData);
+const earthTexture = loadTexture(gl, 'image/2k_earth_daymap.jpg');
 
-const moonTexture = loadTexture(gl, 'image/2k_moon.jpg');  // Path to your Moon texture
-const moonData = createSphere(30, 30);  // Data for the Moon
-const moonBuffers = initBuffers(gl, moonData);  // Buffers for the Moon
+const moonTexture = loadTexture(gl, 'image/2k_moon.jpg');
+const moonData = createSphere(30, 30);
+const moonBuffers = initBuffers(gl, moonData);
 
-const marsData = createSphere(50, 50);  // Data for Mars
-const marsBuffers = initBuffers(gl, marsData);  // Buffers for Mars
-const marsTexture = loadTexture(gl, 'image/2k_mars.jpg');  // Placeholder texture for Mars
+const marsData = createSphere(50, 50);
+const marsBuffers = initBuffers(gl, marsData);
+const marsTexture = loadTexture(gl, 'image/2k_mars.jpg');
 
-const jupiterData = createSphere(50, 50);  // Data for Jupiter
-const jupiterBuffers = initBuffers(gl, jupiterData);  // Buffers for Jupiter
-const jupiterTexture = loadTexture(gl, 'image/2k_jupiter.jpg');  // Placeholder texture for Jupiter
+const jupiterData = createSphere(50, 50);
+const jupiterBuffers = initBuffers(gl, jupiterData);
+const jupiterTexture = loadTexture(gl, 'image/2k_jupiter.jpg');
 
-const saturnData = createSphere(50, 50);  // Data for Saturn
-const saturnBuffers = initBuffers(gl, saturnData);  // Buffers for Saturn
-const saturnTexture = loadTexture(gl, 'image/2k_saturn.jpg');  // Placeholder texture for Saturn
+const saturnData = createSphere(50, 50);
+const saturnBuffers = initBuffers(gl, saturnData);
+const saturnTexture = loadTexture(gl, 'image/2k_saturn.jpg');
 
-const saturnRingTexture = loadTexture(gl, 'image/2k_saturn_ring_alpha.png');  // Path to your ring texture
+const saturnRingTexture = loadTexture(gl, 'image/2k_saturn_ring_alpha.png');
 const saturnRingInnerRadius = 1.2;
 const saturnRingOuterRadius = 1.6;
 const saturnRingSegments = 50;
-const saturnRingRings = 20;  // Number of concentric rings
+const saturnRingRings = 20;
 const saturnRingData = createRealisticRing(saturnRingInnerRadius, saturnRingOuterRadius, saturnRingSegments, saturnRingRings);
 const saturnRingBuffers = initBuffers(gl, saturnRingData);
 
-const uranusData = createSphere(50, 50);  // Data for Uranus
-const uranusBuffers = initBuffers(gl, uranusData);  // Buffers for Uranus
-const uranusTexture = loadTexture(gl, 'image/2k_uranus.jpg');  // Placeholder texture for Uranus
+const uranusData = createSphere(50, 50);
+const uranusBuffers = initBuffers(gl, uranusData);
+const uranusTexture = loadTexture(gl, 'image/2k_uranus.jpg');
 
-const neptuneData = createSphere(50, 50);  // Data for Neptune
-const neptuneBuffers = initBuffers(gl, neptuneData);  // Buffers for Neptune
-const neptuneTexture = loadTexture(gl, 'image/2k_neptune.jpg');  // Placeholder texture for Neptune
+const neptuneData = createSphere(50, 50);
+const neptuneBuffers = initBuffers(gl, neptuneData);
+const neptuneTexture = loadTexture(gl, 'image/2k_neptune.jpg');
 
-const planetEmissionColor = [0.3, 0.3, 0.3];  // Grey color for planet emission
-const sphereEmissionColor = [1.0, 1.0, 0.0];  // Yellow color for sphere emission
-const mercuryEmissionColor = [0.3, 0.3, 0.3];  // Grey color for Mercury emission
+const planetEmissionColor = [0.3, 0.3, 0.3];
+const sphereEmissionColor = [1.0, 1.0, 0.0];
+const mercuryEmissionColor = [0.3, 0.3, 0.3];
 
-// Variables for controlling camera rotation with mouse
-let cameraLongitudeAngle = 0; // Angle around the sun in radians
-let cameraLatitudeAngle = 0; // Angle above/below the equator in radians
-const cameraDistance = 30.0; // Distance of the camera from the sun
+let cameraLongitudeAngle = 0;
+let cameraLatitudeAngle = 0;
+const cameraDistance = 30.0;
 
-const maxLatitudeAngle = Math.PI / 2 - 0.01; // Maximum angle to avoid the poles
+const maxLatitudeAngle = Math.PI / 2 - 0.01;
 
 let lastMouseX = null;
 let lastMouseY = null;
@@ -245,76 +244,83 @@ canvas.addEventListener('mousemove', function(event) {
     const latitudeSpeed = 0.01; // Speed of camera latitude change
     cameraLatitudeAngle -= deltaY * latitudeSpeed;
 
-    // Clamp the latitude angle to avoid reaching the poles
     cameraLatitudeAngle = Math.max(-maxLatitudeAngle, Math.min(maxLatitudeAngle, cameraLatitudeAngle));
 
     drawScene();
 });
 
 let then = 0;
-let mercuryOrbitAngle = 135;  // Angle for Mercury's orbit around the Sun
-let mercuryRotationAngle = 135;  // Angle for Mercury's self-rotation
-let venusOrbitAngle = 35;  // Angle for Venus's orbit around the Sun
-let venusRotationAngle = 35;  // Angle for Venus's self-rotation
-let earthOrbitAngle = 180;  // Angle for Earth's orbit around the Sun
-let earthRotationAngle = 180;  // Angle for Earth's self-rotation
-let marsOrbitAngle = 285;  // Angle for Mars's orbit around the Sun
-let marsRotationAngle = 285;  // Angle for Mars's self-rotation
-let jupiterOrbitAngle = 100;  // Angle for Jupiter's orbit around the Sun
-let jupiterRotationAngle = 100;  // Angle for Jupiter's self-rotation
-let saturnOrbitAngle = 130;  // Angle for Saturn's orbit around the Sun
-let saturnRotationAngle = 130;  // Angle for Saturn's self-rotation
-let uranusOrbitAngle = 60;  // Angle for Uranus's orbit around the Sun
-let uranusRotationAngle = 60;  // Angle for Uranus's self-rotation
-let neptuneOrbitAngle = 85;  // Angle for Neptune's orbit around the Sun
-let neptuneRotationAngle = 85;  // Angle for Neptune's self-rotation
 
-const mercuryOrbitSpeed = 0.071;  // Speed of Mercury's orbit (radians per second)
-const mercuryRotationSpeed = 0.107;  // Speed of Mercury's self-rotation (radians per second)
+let mercuryOrbitAngle = 135;
+let mercuryRotationAngle = 135;
 
-const venusOrbitSpeed = 0.035;  // Speed of Venus's orbit (radians per second)
-const venusRotationSpeed = 0.002;  // Speed of Venus's self-rotation (radians per second)
+let venusOrbitAngle = 35;
+let venusRotationAngle = 35;
 
-const earthOrbitSpeed = 0.017;  // Speed of Earth's orbit (radians per second)
-const earthRotationSpeed = 0.004;  // Speed of Earth's self-rotation (radians per second)
+let earthOrbitAngle = 180;
+let earthRotationAngle = 180;
 
-const marsOrbitSpeed = 0.009;  // Speed of Mars's orbit (radians per second)
-const marsRotationSpeed = 0.006;  // Speed of Mars's self-rotation (radians per second)
+let marsOrbitAngle = 285;
+let marsRotationAngle = 285;
 
-const jupiterOrbitSpeed = 0.001;  // Speed of Jupiter's orbit (radians per second)
-const jupiterRotationSpeed = 0.001;  // Speed of Jupiter's self-rotation (radians per second)
+let jupiterOrbitAngle = 100;
+let jupiterRotationAngle = 100;
 
-const saturnOrbitSpeed = 0.0005;  // Speed of Saturn's orbit (radians per second)
-const saturnRotationSpeed = 0.0005;  // Speed of Saturn's self-rotation (radians per second)
+let saturnOrbitAngle = 130;
+let saturnRotationAngle = 130;
 
-const uranusOrbitSpeed = 0.0002;  // Speed of Uranus's orbit (radians per second)
-const uranusRotationSpeed = 0.0008;  // Speed of Uranus's self-rotation (radians per second)
+let uranusOrbitAngle = 60;
+let uranusRotationAngle = 60;
 
-const neptuneOrbitSpeed = 0.0001;  // Speed of Neptune's orbit (radians per second)
-const neptuneRotationSpeed = 0.0005;  // Speed of Neptune's self-rotation (radians per second)
+let neptuneOrbitAngle = 85;
+let neptuneRotationAngle = 85;
 
-let mercuryOrbitRadius = 1.38 * 2;  // Initial distance of Mercury from the Sun
-let venusOrbitRadius = 2 * 2;  // Initial distance of Venus from the Sun
-let earthOrbitRadius = 3 * 2;  // Initial distance of Earth from the Sun
-let marsOrbitRadius = 4.4 * 2;  // Initial distance of Mars from the Sun
-let jupiterOrbitRadius = 8.2 * 2;  // Initial distance of Jupiter from the Sun
-let saturnOrbitRadius = 12.58 * 2;  // Initial distance of Saturn from the Sun
-let uranusOrbitRadius = 15.14 * 2;  // Initial distance of Uranus from the Sun
-let neptuneOrbitRadius = 20.28 * 2;  // Initial distance of Neptune from the Sun
+const mercuryOrbitSpeed = 0.071;
+const mercuryRotationSpeed = 0.107;
 
-let moonOrbitAngle = 0;  // Angle for Moon's orbit around the Earth
-let moonRotationAngle = 0;  // Angle for Moon's self-rotation
-const moonOrbitRadius = 0.5;  // Distance of the Moon from the Earth
-const moonOrbitSpeed = 0.005;  // Speed of the Moon's orbit (radians per second)
-const moonRotationSpeed = 0.01;  // Speed of the Moon's self-rotation (radians per second)
+const venusOrbitSpeed = 0.035;
+const venusRotationSpeed = 0.002;
+
+const earthOrbitSpeed = 0.017;
+const earthRotationSpeed = 0.004;
+
+const marsOrbitSpeed = 0.009;
+const marsRotationSpeed = 0.006;
+
+const jupiterOrbitSpeed = 0.001;
+const jupiterRotationSpeed = 0.001;
+
+const saturnOrbitSpeed = 0.0005;
+const saturnRotationSpeed = 0.0005;
+
+const uranusOrbitSpeed = 0.0002;
+const uranusRotationSpeed = 0.0008;
+
+const neptuneOrbitSpeed = 0.0001;
+const neptuneRotationSpeed = 0.0005;
+
+let mercuryOrbitRadius = 1.38 * 2;
+let venusOrbitRadius = 2 * 2;
+let earthOrbitRadius = 3 * 2;
+let marsOrbitRadius = 4.4 * 2;
+let jupiterOrbitRadius = 8.2 * 2;
+let saturnOrbitRadius = 12.58 * 2;
+let uranusOrbitRadius = 15.14 * 2;
+let neptuneOrbitRadius = 20.28 * 2;
+
+let moonOrbitAngle = 0;
+let moonRotationAngle = 0;
+const moonOrbitRadius = 0.5;
+const moonOrbitSpeed = 0.005;
+const moonRotationSpeed = 0.01;
 
 const asteroidTextures = [
     loadTexture(gl, 'image/asteoride.jpg'),
     loadTexture(gl, 'image/asteoride1.jpg'),
     loadTexture(gl, 'image/asteoride2.jpg')
 ];
-const asteroidData = createSphere(10, 10);  // Data for an asteroid
-const asteroidBuffers = initBuffers(gl, asteroidData);  // Buffers for the asteroid
+const asteroidData = createSphere(10, 10);
+const asteroidBuffers = initBuffers(gl, asteroidData);
 
 const numAsteroids = 500;
 const asteroids = [];
@@ -325,7 +331,7 @@ const asteroidBeltOuterRadius = jupiterOrbitRadius - 2.0;
 for (let i = 0; i < numAsteroids; i++) {
     const angle = Math.random() * 2 * Math.PI;
     const radius = asteroidBeltInnerRadius + Math.random() * (asteroidBeltOuterRadius - asteroidBeltInnerRadius);
-    const size = 0.05 + Math.random() * 0.1;  // Random size between 0.05 and 0.15
+    const size = 0.05 + Math.random() * 0.1;  
 
     asteroids.push({
         angle: angle,
@@ -335,45 +341,54 @@ for (let i = 0; i < numAsteroids; i++) {
     });
 }
 
+let speedMultiplier = 1.0;
+
+document.getElementById('speedSlider').addEventListener('input', function(event) {
+    speedMultiplier = event.target.value;
+});
+
 function render(now) {
-    now *= 0.001;  // Convert to seconds
+    now *= 0.001;  
     const deltaTime = now - then;
     then = now;
 
-    // Update the angles for all planets' orbits and self-rotations
-    mercuryOrbitAngle += mercuryOrbitSpeed * deltaTime;
-    mercuryRotationAngle += mercuryRotationSpeed * deltaTime;
+    mercuryOrbitAngle += mercuryOrbitSpeed * deltaTime * speedMultiplier;
+    mercuryRotationAngle += mercuryRotationSpeed * deltaTime * speedMultiplier;
 
-    venusOrbitAngle += venusOrbitSpeed * deltaTime;
-    venusRotationAngle += venusRotationSpeed * deltaTime;
+    venusOrbitAngle += venusOrbitSpeed * deltaTime * speedMultiplier;
+    venusRotationAngle += venusRotationSpeed * deltaTime * speedMultiplier;
 
-    earthOrbitAngle += earthOrbitSpeed * deltaTime;
-    earthRotationAngle += earthRotationSpeed * deltaTime;
+    earthOrbitAngle += earthOrbitSpeed * deltaTime * speedMultiplier;
+    earthRotationAngle += earthRotationSpeed * deltaTime * speedMultiplier;
 
-    marsOrbitAngle += marsOrbitSpeed * deltaTime;
-    marsRotationAngle += marsRotationSpeed * deltaTime;
+    marsOrbitAngle += marsOrbitSpeed * deltaTime * speedMultiplier;
+    marsRotationAngle += marsRotationSpeed * deltaTime * speedMultiplier;
 
-    jupiterOrbitAngle += jupiterOrbitSpeed * deltaTime;
-    jupiterRotationAngle += jupiterRotationSpeed * deltaTime;
+    jupiterOrbitAngle += jupiterOrbitSpeed * deltaTime * speedMultiplier;
+    jupiterRotationAngle += jupiterRotationSpeed * deltaTime * speedMultiplier;
 
-    saturnOrbitAngle += saturnOrbitSpeed * deltaTime;
-    saturnRotationAngle += saturnRotationSpeed * deltaTime;
+    saturnOrbitAngle += saturnOrbitSpeed * deltaTime * speedMultiplier;
+    saturnRotationAngle += saturnRotationSpeed * deltaTime * speedMultiplier;
 
-    uranusOrbitAngle += uranusOrbitSpeed * deltaTime;
-    uranusRotationAngle += uranusRotationSpeed * deltaTime;
+    uranusOrbitAngle += uranusOrbitSpeed * deltaTime * speedMultiplier;
+    uranusRotationAngle += uranusRotationSpeed * deltaTime * speedMultiplier;
 
-    neptuneOrbitAngle += neptuneOrbitSpeed * deltaTime;
-    neptuneRotationAngle += neptuneRotationSpeed * deltaTime;
+    neptuneOrbitAngle += neptuneOrbitSpeed * deltaTime * speedMultiplier;
+    neptuneRotationAngle += neptuneRotationSpeed * deltaTime * speedMultiplier;
 
-    // Update the angles for the Moon's orbit and self-rotation
-    moonOrbitAngle += moonOrbitSpeed * deltaTime;
-    moonRotationAngle += moonRotationSpeed * deltaTime;
+    
+    moonOrbitAngle += moonOrbitSpeed * deltaTime * speedMultiplier;
+    moonRotationAngle += moonRotationSpeed * deltaTime * speedMultiplier;
+
+    
+    for (const asteroid of asteroids) {
+        asteroid.angle += 0.0001 * deltaTime * speedMultiplier;  // Slow orbit for asteroids
+    }
 
     drawScene(); // Redraw the scene
 
     requestAnimationFrame(render); // Continue to animate the frame
 }
-
 
 function createRealisticRing(innerRadius, outerRadius, segments, rings) {
     const positions = [];
@@ -583,25 +598,25 @@ function drawCircle(gl, orbitProgramInfo, buffer, modelViewMatrix, projectionMat
 }
 
 function drawScene() {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Set background color
-    gl.clearDepth(1.0);  // Clear depth buffer
-    gl.enable(gl.DEPTH_TEST);  // Enable depth test
-    gl.depthFunc(gl.LEQUAL);  // Near is less than far
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);//Set background color
+    gl.clearDepth(1.0);//Clear depth buffer
+    gl.enable(gl.DEPTH_TEST);//Enable depth test
+    gl.depthFunc(gl.LEQUAL);//Near is less than far
     
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  // Clear color and depth buffer.
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);//Clear color and depth buffer.
 
-    const fieldOfView = 45 * Math.PI / 180;   // 45 degrees field of view
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;  // Aspect ratio of the viewport
-    const zNear = 0.1;  // Near view
-    const zFar = 100.0;  // Far view
-    const projectionMatrix = mat4.create();  // Projection matrix
+    const fieldOfView = 45 * Math.PI / 180;//45 degrees field of view
+    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;//Aspect ratio of the viewport
+    const zNear = 0.1;//Near view
+    const zFar = 100.0;//Far view
+    const projectionMatrix = mat4.create();//Projection matrix
     
-    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);  // Perspective
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);//Perspective
     
-    const modelViewMatrix = mat4.create();  // View matrix
+    const modelViewMatrix = mat4.create();//View matrix
 
     // Calculate camera position relative to sun (center)
-    const sunPosition = [0.0, 0.0, 0.0];  // Assuming sun is at the center for simplicity
+    const sunPosition = [0.0, 0.0, 0.0];//Assuming sun is at the center for simplicity
 
     const cameraX = sunPosition[0] + cameraDistance * Math.sin(cameraLongitudeAngle) * Math.cos(cameraLatitudeAngle);
     const cameraY = sunPosition[1] + cameraDistance * Math.sin(cameraLatitudeAngle);

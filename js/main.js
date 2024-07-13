@@ -314,6 +314,9 @@ const moonOrbitRadius = 0.5;
 const moonOrbitSpeed = 0.005;
 const moonRotationSpeed = 0.01;
 
+let sunRotationAngle = 0;
+const sunRotationSpeed = 0.1; // Adjust the speed as needed
+
 const asteroidTextures = [
     loadTexture(gl, 'image/asteoride.jpg'),
     loadTexture(gl, 'image/asteoride1.jpg'),
@@ -351,6 +354,8 @@ function render(now) {
     now *= 0.001;  
     const deltaTime = now - then;
     then = now;
+
+    sunRotationAngle += sunRotationSpeed * deltaTime * speedMultiplier;
 
     mercuryOrbitAngle += mercuryOrbitSpeed * deltaTime * speedMultiplier;
     mercuryRotationAngle += mercuryRotationSpeed * deltaTime * speedMultiplier;
@@ -672,7 +677,12 @@ function drawScene() {
     // Transform the sun position using the model view matrix
     const sunPositionTransformed = vec3.transformMat4(vec3.create(), sunPosition, modelViewMatrix);
     gl.uniform3fv(programInfo.uniformLocations.uSunPosition, sunPositionTransformed);
-    drawPlanet(gl, programInfo, sunBuffers, sunTexture, modelViewMatrix, projectionMatrix, sunPositionTransformed, 2.0, 0.0, sphereEmissionColor);  // Sphere size, no rotation, yellow emission
+
+    const modelViewMatrixSun = mat4.clone(modelViewMatrix);
+    mat4.rotate(modelViewMatrixSun, modelViewMatrixSun, sunRotationAngle, [0, 1, 0]);  // Rotate the sun around its Y axis
+
+    drawPlanet(gl, programInfo, sunBuffers, sunTexture, modelViewMatrixSun, projectionMatrix, sunPositionTransformed, 2.0, 0.0, sphereEmissionColor);  // Sphere size, no additional rotation, yellow emission
+
 
     // Draw Mercury without emission
     const mercuryPosition = [

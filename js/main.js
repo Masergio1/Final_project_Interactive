@@ -1,16 +1,18 @@
+// Get the canvas element and the WebGL context
 const canvas = document.getElementById('canvas');
 const gl = canvas.getContext('webgl');
 
+// Check if WebGL is supported
 if (!gl) {
-    console.error("WebGL non è supportato dal tuo browser.");
+    console.error("WebGL is not supported by your browser.");
 }
 
-// Set the canvas for high resolution
+// Set the canvas resolution for high quality rendering
 canvas.width = canvas.clientWidth * window.devicePixelRatio;
 canvas.height = canvas.clientHeight * window.devicePixelRatio;
 gl.viewport(0, 0, canvas.width, canvas.height);
 
-// Vertex shader source
+// Vertex shader source code
 const vsSource = `
     attribute vec4 aVertexPosition;
     attribute vec3 aVertexNormal;
@@ -28,14 +30,13 @@ const vsSource = `
         vPosition = uModelViewMatrix * aVertexPosition;
         gl_Position = uProjectionMatrix * vPosition;
 
-        // Check if attributes are enabled before using them
+        // Pass texture coordinates and normal vector to the fragment shader
         vTextureCoord = aTextureCoord;
         vTransformedNormal = normalize(vec3(uNormalMatrix * vec4(aVertexNormal, 1.0)));
     }
 `;
 
-
-// Fragment shader source
+// Fragment shader source code
 const fsSource = `
     precision highp float;
 
@@ -53,20 +54,33 @@ const fsSource = `
         // Calculate direction from surface to Sun
         highp vec3 surfaceToSun = normalize(uSunPosition - vec3(vPosition.xyz));
 
-        // Calculate sunlight
+        // Calculate sunlight based on the angle between the normal and light direction
         highp float directional = max(dot(normal, surfaceToSun), 0.0);
 
         highp vec3 emissionLight = uEmissionColor;
         highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
 
-        // Apply lighting only if the emission color is zero (i.e., not the sun)
+        // Combine the texture color with lighting effects
         highp vec3 finalColor = texelColor.rgb * (directional + emissionLight);
         gl_FragColor = vec4(finalColor, texelColor.a);
     }
 `;
 
+// Initialize the shader program by calling the initShaderProgram function with the WebGL context, 
+//vertex shader source code (vsSource), and fragment shader source code (fsSource).
+// The initShaderProgram function returns a shader program object that contains information about 
+//the compiled shaders and their attribute and uniform locations.
+
+// Create a shader program object and assign it to the shaderProgram variable.
 const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
 
+// Define an object called programInfo that contains information about the shader program.
+// The programInfo object has three properties: program, attribLocations, and uniformLocations.
+// - The program property stores the shader program object.
+// - The attribLocations property stores the attribute locations of the vertex position, vertex normal, 
+//and texture coordinates.
+// - The uniformLocations property stores the uniform locations of the projection matrix, model-view matrix,
+// normal matrix, texture sampler, sun position, and emission color.
 const programInfo = {
     program: shaderProgram,
     attribLocations: {
@@ -84,21 +98,24 @@ const programInfo = {
     },
 };
 
+// Vertex shader source code for the orbit program
 const orbitVertexShaderSource = `
 attribute vec4 aPosition;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 void main(void) {
-
     gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
 }
 `;
+
+// Fragment shader source code for the orbit program
 const orbitFragmentShaderSource = `
 void main(void) {
     gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
 }
 `;
 
+// Initialize the orbit shader program
 const orbitShaderProgram = initShaderProgram(gl, orbitVertexShaderSource, orbitFragmentShaderSource);
 
 const orbitProgramInfo = {
@@ -112,6 +129,7 @@ const orbitProgramInfo = {
     },
 };
 
+// Vertex shader source code for the background
 const backgroundVsSource = `
     attribute vec4 aVertexPosition;
     attribute vec2 aTextureCoord;
@@ -127,6 +145,7 @@ const backgroundVsSource = `
     }
 `;
 
+// Fragment shader source code for the background
 const backgroundFsSource = `
     precision highp float;
 
@@ -139,6 +158,7 @@ const backgroundFsSource = `
     }
 `;
 
+// Initialize the background shader program
 const backgroundShaderProgram = initShaderProgram(gl, backgroundVsSource, backgroundFsSource);
 
 const backgroundProgramInfo = {
@@ -154,6 +174,7 @@ const backgroundProgramInfo = {
     },
 };
 
+// Load textures for the background and planets
 const backgroundTexture = loadTexture(gl, 'image/2k_stars_milky_way.jpg');
 const backgroundData = createBackgroundSphere(50, 50);
 const backgroundBuffers = initBuffers(gl, backgroundData);
@@ -206,20 +227,24 @@ const neptuneData = createSphere(50, 50);
 const neptuneBuffers = initBuffers(gl, neptuneData);
 const neptuneTexture = loadTexture(gl, 'image/2k_neptune.jpg');
 
+// Set emission colors for the planets and Sun
 const planetEmissionColor = [0.3, 0.3, 0.3];
 const sphereEmissionColor = [1.0, 1.0, 0.0];
 const mercuryEmissionColor = [0.3, 0.3, 0.3];
 
+// Set initial camera angles and distance
 let cameraLongitudeAngle = 0;
 let cameraLatitudeAngle = 0;
 const cameraDistance = 30.0;
 
+// Limit the camera latitude angle to prevent flipping
 const maxLatitudeAngle = Math.PI / 2 - 0.01;
 
 let lastMouseX = null;
 let lastMouseY = null;
 let dragging = false;
 
+// Add event listeners for mouse interaction
 canvas.addEventListener('mousedown', function(event) {
     dragging = true;
     lastMouseX = event.clientX;
@@ -230,22 +255,37 @@ canvas.addEventListener('mouseup', function(event) {
     dragging = false;
 });
 
+// In the first part, I check if the mouse has been clicked. If it has, I set the dragging variable to true 
+//and save the mouse coordinates. Then, if the mouse is released, I set the dragging variable to false. Using 
+//deltaX and deltaY, I calculate the difference between the current mouse position and the previous one. With
+// rotationSpeed, I set the rotation speed of the camera. By updating the cameraLongitudeAngle, I adjust the 
+// camera's longitude angle based on the mouse movement.
 canvas.addEventListener('mousemove', function(event) {
+    // Check if dragging is true
     if (!dragging) {
         return;
     }
     
+    // Calculate the change in X and Y coordinates
     const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-    const rotationSpeed = 0.01; // Speed of camera rotation
+    // Set the rotation speed of the camera
+    const rotationSpeed = 0.01;
+
+    // Update the camera longitude angle based on the mouse movement
     cameraLongitudeAngle += deltaX * rotationSpeed;
 
-    const latitudeSpeed = 0.01; // Speed of camera latitude change
+    // Set the latitude speed of the camera
+    const latitudeSpeed = 0.01;
+
+    // Update the camera latitude angle based on the mouse movement
     cameraLatitudeAngle -= deltaY * latitudeSpeed;
 
+    // Limit the camera latitude angle to prevent flipping
     cameraLatitudeAngle = Math.max(-maxLatitudeAngle, Math.min(maxLatitudeAngle, cameraLatitudeAngle));
 
+    // Redraw the scene with the updated camera angles
     drawScene();
 });
 
@@ -331,30 +371,47 @@ const asteroids = [];
 const asteroidBeltInnerRadius = marsOrbitRadius + 2.0;
 const asteroidBeltOuterRadius = jupiterOrbitRadius - 2.0;
 
+// Generate random asteroids and add them to the asteroids array
 for (let i = 0; i < numAsteroids; i++) {
+    // Generate a random angle between 0 and 2 * PI
     const angle = Math.random() * 2 * Math.PI;
+    
+    // Generate a random radius within the asteroid belt range
     const radius = asteroidBeltInnerRadius + Math.random() * (asteroidBeltOuterRadius - asteroidBeltInnerRadius);
-    const size = 0.05 + Math.random() * 0.1;  
-
+    
+    // Generate a random size for the asteroid
+    const size = 0.05 + Math.random() * 0.1;
+    
+    // Select a random texture for the asteroid from the asteroidTextures array
+    const texture = asteroidTextures[Math.floor(Math.random() * asteroidTextures.length)];
+    
+    // Create an asteroid object with the generated properties and add it to the asteroids array
     asteroids.push({
         angle: angle,
         radius: radius,
         size: size,
-        texture: asteroidTextures[Math.floor(Math.random() * asteroidTextures.length)]
+        texture: texture
     });
 }
 
 let speedMultiplier = 1.0;
 
+// Add an event listener to the 'speedSlider' element to listen for changes in the input value
 document.getElementById('speedSlider').addEventListener('input', function(event) {
+    // Update the speedMultiplier variable with the new value from the slider
     speedMultiplier = event.target.value;
 });
 
+// Define a render function that will be called repeatedly to animate the scene
 function render(now) {
+    // Convert the current time to seconds
     now *= 0.001;  
+    // Calculate the time difference between the current frame and the previous frame
     const deltaTime = now - then;
+    // Update the previous frame time to the current frame time
     then = now;
 
+    // Update the rotation angles for the sun and each planet based on the deltaTime and speedMultiplier
     sunRotationAngle += sunRotationSpeed * deltaTime * speedMultiplier;
 
     mercuryOrbitAngle += mercuryOrbitSpeed * deltaTime * speedMultiplier;
@@ -381,48 +438,53 @@ function render(now) {
     neptuneOrbitAngle += neptuneOrbitSpeed * deltaTime * speedMultiplier;
     neptuneRotationAngle += neptuneRotationSpeed * deltaTime * speedMultiplier;
 
-    
     moonOrbitAngle += moonOrbitSpeed * deltaTime * speedMultiplier;
     moonRotationAngle += moonRotationSpeed * deltaTime * speedMultiplier;
 
-    
+    // Update the angle for each asteroid in the asteroids array
     for (const asteroid of asteroids) {
-        asteroid.angle += 0.0001 * deltaTime * speedMultiplier;  // Slow orbit for asteroids
+        asteroid.angle += 0.01 * deltaTime * speedMultiplier;  // Slow orbit for asteroids
     }
 
-    drawScene(); // Redraw the scene
+    // Redraw the scene
+    drawScene();
 
-    requestAnimationFrame(render); // Continue to animate the frame
+    // Request the next animation frame to continue the animation loop
+    requestAnimationFrame(render);
 }
 
+// This function creates a realistic ring geometry with specified inner radius, 
+// outer radius, number of segments, and number of rings
 function createRealisticRing(innerRadius, outerRadius, segments, rings) {
-    const positions = [];
-    const textureCoords = [];
-    const indices = [];
+    const positions = []; // An array to store the vertex positions of the ring
+    const textureCoords = []; // An array to store the texture coordinates of the ring
+    const indices = []; // An array to store the indices of the ring vertices
 
-    const step = 2 * Math.PI / segments;
-    const ringStep = (outerRadius - innerRadius) / rings;
+    const step = 2 * Math.PI / segments; // Calculate the angle step between each segment
+    const ringStep = (outerRadius - innerRadius) / rings; // Calculate the distance step between each ring
 
+    // Loop through each ring and segment to generate the ring vertices
     for (let r = 0; r <= rings; r++) {
-        const radius = innerRadius + r * ringStep;
+        const radius = innerRadius + r * ringStep; // Calculate the radius of the current ring
         for (let i = 0; i <= segments; i++) {
-            const angle = i * step;
-            const x = radius * Math.cos(angle);
-            const z = radius * Math.sin(angle);
+            const angle = i * step; // Calculate the angle of the current segment
+            const x = radius * Math.cos(angle); // Calculate the x-coordinate of the vertex
+            const z = radius * Math.sin(angle); // Calculate the z-coordinate of the vertex
 
-            positions.push(x, 0.0, z);
-            textureCoords.push(i / segments, r / rings);
+            positions.push(x, 0.0, z); // Add the vertex position to the positions array
+            textureCoords.push(i / segments, r / rings); // Add the texture coordinates to the textureCoords array
 
             if (r < rings && i < segments) {
-                const first = r * (segments + 1) + i;
-                const second = first + segments + 1;
+                const first = r * (segments + 1) + i; // Calculate the index of the first vertex of the current quad
+                const second = first + segments + 1; // Calculate the index of the second vertex of the current quad
 
-                indices.push(first, second, first + 1);
-                indices.push(second, second + 1, first + 1);
+                indices.push(first, second, first + 1); // Add the indices of the first triangle of the quad
+                indices.push(second, second + 1, first + 1); // Add the indices of the second triangle of the quad
             }
         }
     }
 
+    // Return an object containing the positions, texture coordinates, and indices of the ring
     return {
         position: positions,
         textureCoord: textureCoords,
@@ -430,83 +492,94 @@ function createRealisticRing(innerRadius, outerRadius, segments, rings) {
     };
 }
 
+// This function initializes the buffers for a realistic ring geometry
+// with the specified inner radius, outer radius, number of segments, and number of rings
+// The function returns an object containing the WebGL buffers for the ring geometry
+// This function is responsible for drawing a ring in the WebGL context.
 function drawRing(gl, programInfo, buffers, texture, modelViewMatrix, projectionMatrix) {
+    // Use the specified shader program
     gl.useProgram(programInfo.program);
 
-    // Bind the buffers
+    // Bind the position buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
     gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
+    // Bind the texture coordinate buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
     gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
+    // Bind the index buffer
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
     // Set the shader uniforms
     gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+    // Bind the texture and set the uniform sampler
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
+    // Draw the ring using the specified vertex count, type, and offset
     const vertexCount = buffers.vertexCount;
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
 }
 
+// This function creates a background sphere geometry with the specified number of latitude bands and longitude bands
 function createBackgroundSphere(latitudeBands, longitudeBands) {
-    const positions = [];
-    const normals = [];
-    const textureCoords = [];
-    const indices = [];
+    const positions = []; // An array to store the vertex positions of the background sphere
+    const normals = []; // An array to store the vertex normals of the background sphere
+    const textureCoords = []; // An array to store the texture coordinates of the background sphere
+    const indices = []; // An array to store the indices of the background sphere vertices
 
+    // Loop through each latitude band and longitude band to generate the background sphere vertices
     for (let latNumber = 0; latNumber <= latitudeBands; ++latNumber) {
-        const theta = latNumber * Math.PI / latitudeBands;
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
+        const theta = latNumber * Math.PI / latitudeBands; // Calculate the latitude angle
+        const sinTheta = Math.sin(theta); // Calculate the sine of the latitude angle
+        const cosTheta = Math.cos(theta); // Calculate the cosine of the latitude angle
 
         for (let longNumber = 0; longNumber <= longitudeBands; ++longNumber) {
-            const phi = longNumber * 2 * Math.PI / longitudeBands;
-            const sinPhi = Math.sin(phi);
-            const cosPhi = Math.cos(phi);
+            const phi = longNumber * 2 * Math.PI / longitudeBands; // Calculate the longitude angle
+            const sinPhi = Math.sin(phi); // Calculate the sine of the longitude angle
+            const cosPhi = Math.cos(phi); // Calculate the cosine of the longitude angle
 
-            const x = cosPhi * sinTheta;
-            const y = cosTheta;
-            const z = sinPhi * sinTheta;
-            const u = 1 - (longNumber / longitudeBands);
-            const v = 1 - (latNumber / latitudeBands);
+            const x = cosPhi * sinTheta; // Calculate the x coordinate of the vertex
+            const y = cosTheta; // Calculate the y coordinate of the vertex
+            const z = sinPhi * sinTheta; // Calculate the z coordinate of the vertex
+            const u = 1 - (longNumber / longitudeBands); // Calculate the u texture coordinate
+            const v = 1 - (latNumber / latitudeBands); // Calculate the v texture coordinate
 
-            normals.push(-x);  // Inverted normals
-            normals.push(-y);
-            normals.push(-z);
-            textureCoords.push(u);
-            textureCoords.push(v);
-            positions.push(x);
-            positions.push(y);
-            positions.push(z);
+            normals.push(-x); // Store the inverted x component of the vertex normal
+            normals.push(-y); // Store the inverted y component of the vertex normal
+            normals.push(-z); // Store the inverted z component of the vertex normal
+            textureCoords.push(u); // Store the u texture coordinate
+            textureCoords.push(v); // Store the v texture coordinate
+            positions.push(x); // Store the x coordinate of the vertex
+            positions.push(y); // Store the y coordinate of the vertex
+            positions.push(z); // Store the z coordinate of the vertex
         }
     }
 
-
-
+    // Loop through each latitude band and longitude band to generate the indices of the background sphere vertices
     for (let latNumber = 0; latNumber < latitudeBands; ++latNumber) {
         for (let longNumber = 0; longNumber < longitudeBands; ++longNumber) {
-            const first = (latNumber * (longitudeBands + 1)) + longNumber;
-            const second = first + longitudeBands + 1;
-            indices.push(first);
-            indices.push(second);
-            indices.push(first + 1);
+            const first = (latNumber * (longitudeBands + 1)) + longNumber; // Calculate the index of the first vertex of the quad
+            const second = first + longitudeBands + 1; // Calculate the index of the second vertex of the quad
+            indices.push(first); // Store the index of the first vertex of the quad
+            indices.push(second); // Store the index of the second vertex of the quad
+            indices.push(first + 1); // Store the index of the third vertex of the quad
 
-            indices.push(second);
-            indices.push(second + 1);
-            indices.push(first + 1);
+            indices.push(second); // Store the index of the second vertex of the quad
+            indices.push(second + 1); // Store the index of the fourth vertex of the quad
+            indices.push(first + 1); // Store the index of the third vertex of the quad
         }
     }
 
+    // Return an object containing the positions, normals, texture coordinates, and indices of the background sphere
     return {
         position: positions,
         normal: normals,
@@ -515,90 +588,114 @@ function createBackgroundSphere(latitudeBands, longitudeBands) {
     };
 }
 
+// This function is responsible for drawing the background sphere in the WebGL context.
 function drawBackground(gl, programInfo, buffers, texture, modelViewMatrix, projectionMatrix) {
+    // Use the specified shader program
     gl.useProgram(programInfo.program);
 
-    // Bind the buffers
+    // Bind the position buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
     gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
+    // Bind the texture coordinate buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
     gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
+    // Bind the index buffer
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
     // Set the shader uniforms
     gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+    // Bind the texture and set the uniform sampler
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
+    // Draw the background sphere using the specified vertex count, type, and offset
     const vertexCount = buffers.vertexCount;
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
 }
 
+// This function is responsible for drawing a planet in the WebGL context.
 function drawPlanet(gl, programInfo, buffers, texture, modelViewMatrix, projectionMatrix, sunPosition, scale, rotationAngle, emissionColor) {
+    // Bind the position buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
     gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
+    // Bind the normal buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
     gl.vertexAttribPointer(programInfo.attribLocations.vertexNormal, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
 
+    // Bind the texture coordinate buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
     gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
+    // Bind the index buffer
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
+    // Create a copy of the modelViewMatrix for self-rotation
     const modelViewMatrixCopy = mat4.clone(modelViewMatrix);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, rotationAngle, [0, 1, 0]); // Apply self-rotation
+
+    // Apply self-rotation to the modelViewMatrix
+    mat4.rotate(modelViewMatrix, modelViewMatrix, rotationAngle, [0, 1, 0]);
+
+    // Apply scale to the modelViewMatrix
     mat4.scale(modelViewMatrix, modelViewMatrix, [scale, scale, scale]);
 
-    // Calculate normal matrix
+    // Calculate the normal matrix for lighting calculations
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
+    // Use the specified shader program
     gl.useProgram(programInfo.program);
 
+    // Set the shader uniforms
     gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations.uNormalMatrix, false, normalMatrix);
     gl.uniform3fv(programInfo.uniformLocations.uSunPosition, sunPosition);
-    gl.uniform3fv(programInfo.uniformLocations.uEmissionColor, emissionColor); // Apply emission color
+    gl.uniform3fv(programInfo.uniformLocations.uEmissionColor, emissionColor);
 
+    // Bind the texture and set the uniform sampler
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
-    {
-        const vertexCount = buffers.vertexCount;
-        const type = gl.UNSIGNED_SHORT;
-        const offset = 0;
-        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    }
+    // Draw the planet using the specified vertex count, type, and offset
+    const vertexCount = buffers.vertexCount;
+    const type = gl.UNSIGNED_SHORT;
+    const offset = 0;
+    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
 
+    // Restore the original modelViewMatrix
     mat4.copy(modelViewMatrix, modelViewMatrixCopy);
 }
 
+// This function is responsible for drawing a circle in the WebGL context.
 function drawCircle(gl, orbitProgramInfo, buffer, modelViewMatrix, projectionMatrix) {
+    // Bind the position buffer and specify the vertex attribute pointer
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer.position);
     gl.vertexAttribPointer(orbitProgramInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(orbitProgramInfo.attribLocations.vertexPosition);
 
+    // Use the specified shader program
     gl.useProgram(orbitProgramInfo.program);
 
+    // Set the shader uniforms
     gl.uniformMatrix4fv(orbitProgramInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
     gl.uniformMatrix4fv(orbitProgramInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+    // Draw the circle using gl.LINE_LOOP primitive type
     gl.drawArrays(gl.LINE_LOOP, 0, buffer.vertexCount);
 }
 
@@ -808,100 +905,91 @@ function drawScene() {
     }
 }
 
-function drawOrbit(radius) {
-    const circleData = createCircle(radius, 100);  // Adjust radius based on the planet's distance from the Sun
-    const circleBuffer = initCircleBuffer(gl, circleData);  // Initialize buffer with the new circle data
-    drawCircle(gl, orbitProgramInfo, circleBuffer, modelViewMatrix, projectionMatrix);
-}
-
-function drawPlanetInOrbit(orbitRadius, orbitAngle, rotationAngle, buffers, texture, scale, emissionColor) {
-    const planetPosition = [
-        orbitRadius * Math.cos(orbitAngle),
-        0.0,
-        orbitRadius * Math.sin(orbitAngle)
-    ];  // Calculate planet's position
-
-    const modelViewMatrixPlanet = mat4.clone(modelViewMatrix);
-    mat4.translate(modelViewMatrixPlanet, modelViewMatrixPlanet, planetPosition);  // Translate planet to its position
-
-    drawPlanet(gl, programInfo, buffers, texture, modelViewMatrixPlanet, projectionMatrix, sunPositionTransformed, scale, rotationAngle, emissionColor);  // Draw planet with the given parameters
-}
-
-
+// This function creates a circle with the given radius and number of segments
 function createCircle(radius, segments) {
     const positions = [];
     const step = 2 * Math.PI / segments;
 
+    // Loop through each segment and calculate the position of each point on the circle
     for (let i = 0; i <= segments; i++) {
         const angle = i * step;
-        positions.push(radius * Math.cos(angle));
-        positions.push(0.0);
-        positions.push(radius * Math.sin(angle));
+        positions.push(radius * Math.cos(angle)); // Calculate x-coordinate of the point
+        positions.push(0.0); // Set y-coordinate of the point to 0
+        positions.push(radius * Math.sin(angle)); // Calculate z-coordinate of the point
     }
 
+    // Return an object containing the positions of the points on the circle
     return {
         position: positions,
     };
 }
 
+// This function initializes the buffer for the circle
 function initCircleBuffer(gl, data) {
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.position), gl.STATIC_DRAW);
+    const positionBuffer = gl.createBuffer(); // Create a buffer object
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); // Bind the buffer object to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.position), gl.STATIC_DRAW); // Fill the buffer with the position data
 
+    // Return an object containing the buffer and the number of vertices in the circle
     return {
         position: positionBuffer,
-        vertexCount: data.position.length / 3,
+        vertexCount: data.position.length / 3, // Divide the total number of positions by 3 to get the number of vertices
     };
 }
 
+// This function creates a sphere with the given number of latitude and longitude bands
 function createSphere(latitudeBands, longitudeBands) {
-    const positions = [];
-    const normals = [];
-    const textureCoords = [];
-    const indices = [];
+    const positions = []; // Array to store the positions of the vertices
+    const normals = []; // Array to store the normals of the vertices
+    const textureCoords = []; // Array to store the texture coordinates of the vertices
+    const indices = []; // Array to store the indices of the vertices
 
+    // Loop through each latitude band
     for (let latNumber = 0; latNumber <= latitudeBands; ++latNumber) {
-        const theta = latNumber * Math.PI / latitudeBands;
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
+        const theta = latNumber * Math.PI / latitudeBands; // Calculate the angle theta
+        const sinTheta = Math.sin(theta); // Calculate the sine of theta
+        const cosTheta = Math.cos(theta); // Calculate the cosine of theta
 
+        // Loop through each longitude band
         for (let longNumber = 0; longNumber <= longitudeBands; ++longNumber) {
-            const phi = longNumber * 2 * Math.PI / longitudeBands;
-            const sinPhi = Math.sin(phi);
-            const cosPhi = Math.cos(phi);
+            const phi = longNumber * 2 * Math.PI / longitudeBands; // Calculate the angle phi
+            const sinPhi = Math.sin(phi); // Calculate the sine of phi
+            const cosPhi = Math.cos(phi); // Calculate the cosine of phi
 
-            const x = cosPhi * sinTheta;
-            const y = cosTheta;
-            const z = sinPhi * sinTheta;
-            const u = 1 - (longNumber / longitudeBands);
-            const v = 1 - (latNumber / latitudeBands);
+            const x = cosPhi * sinTheta; // Calculate the x-coordinate of the vertex
+            const y = cosTheta; // Calculate the y-coordinate of the vertex
+            const z = sinPhi * sinTheta; // Calculate the z-coordinate of the vertex
+            const u = 1 - (longNumber / longitudeBands); // Calculate the u-coordinate of the texture coordinate
+            const v = 1 - (latNumber / latitudeBands); // Calculate the v-coordinate of the texture coordinate
 
-            normals.push(x);
-            normals.push(y);
-            normals.push(z);
-            textureCoords.push(u);
-            textureCoords.push(v);
-            positions.push(x);
-            positions.push(y);
-            positions.push(z);
+            normals.push(x); // Add the x-coordinate of the normal to the normals array
+            normals.push(y); // Add the y-coordinate of the normal to the normals array
+            normals.push(z); // Add the z-coordinate of the normal to the normals array
+            textureCoords.push(u); // Add the u-coordinate of the texture coordinate to the textureCoords array
+            textureCoords.push(v); // Add the v-coordinate of the texture coordinate to the textureCoords array
+            positions.push(x); // Add the x-coordinate of the position to the positions array
+            positions.push(y); // Add the y-coordinate of the position to the positions array
+            positions.push(z); // Add the z-coordinate of the position to the positions array
         }
     }
 
+    // Loop through each latitude band (except the last one)
     for (let latNumber = 0; latNumber < latitudeBands; ++latNumber) {
+        // Loop through each longitude band (except the last one)
         for (let longNumber = 0; longNumber < longitudeBands; ++longNumber) {
-            const first = (latNumber * (longitudeBands + 1)) + longNumber;
-            const second = first + longitudeBands + 1;
-            indices.push(first);
-            indices.push(second);
-            indices.push(first + 1);
+            const first = (latNumber * (longitudeBands + 1)) + longNumber; // Calculate the index of the first vertex of the quad
+            const second = first + longitudeBands + 1; // Calculate the index of the second vertex of the quad
+            indices.push(first); // Add the index of the first vertex to the indices array
+            indices.push(second); // Add the index of the second vertex to the indices array
+            indices.push(first + 1); // Add the index of the next vertex to the indices array
 
-            indices.push(second);
-            indices.push(second + 1);
-            indices.push(first + 1);
+            indices.push(second); // Add the index of the second vertex to the indices array
+            indices.push(second + 1); // Add the index of the next vertex to the indices array
+            indices.push(first + 1); // Add the index of the next vertex to the indices array
         }
     }
 
+    // Return an object containing the positions, normals, texture coordinates, and indices of the vertices
     return {
         position: positions,
         normal: normals,
@@ -910,22 +998,23 @@ function createSphere(latitudeBands, longitudeBands) {
     };
 }
 
+// This function initializes the buffers for the WebGL context
 function initBuffers(gl, data) {
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.position), gl.STATIC_DRAW);
+    const positionBuffer = gl.createBuffer(); // Create a buffer object for the positions
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); // Bind the position buffer to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.position), gl.STATIC_DRAW); // Fill the position buffer with the position data
 
-    const normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normal), gl.STATIC_DRAW);
+    const normalBuffer = gl.createBuffer(); // Create a buffer object for the normals
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer); // Bind the normal buffer to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normal), gl.STATIC_DRAW); // Fill the normal buffer with the normal data
 
-    const textureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.textureCoord), gl.STATIC_DRAW);
+    const textureCoordBuffer = gl.createBuffer(); // Create a buffer object for the texture coordinates
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer); // Bind the texture coordinate buffer to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.textureCoord), gl.STATIC_DRAW); // Fill the texture coordinate buffer with the texture coordinate data
 
-    const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.indices), gl.STATIC_DRAW);
+    const indexBuffer = gl.createBuffer(); // Create a buffer object for the indices
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer); // Bind the index buffer to the ELEMENT_ARRAY_BUFFER target
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.indices), gl.STATIC_DRAW); // Fill the index buffer with the index data
 
     return {
         position: positionBuffer,
@@ -936,9 +1025,10 @@ function initBuffers(gl, data) {
     };
 }
 
+// This function loads a texture from the given URL
 function loadTexture(gl, url) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    const texture = gl.createTexture(); // Create a texture object
+    gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the texture object to the TEXTURE_2D target
 
     const level = 0;
     const internalFormat = gl.RGBA;
@@ -948,64 +1038,68 @@ function loadTexture(gl, url) {
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
     const pixel = new Uint8Array([0, 0, 255, 255]);
-    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel); // Set a default pixel for the texture
 
-    const image = new Image();
+    const image = new Image(); // Create an image object
     image.onload = function () {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+        gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the texture object to the TEXTURE_2D target
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image); // Set the image as the texture
 
         if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.generateMipmap(gl.TEXTURE_2D); // Generate mipmaps for the texture if the image dimensions are power of 2
         } else {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // Set the texture wrap mode for S axis
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // Set the texture wrap mode for T axis
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Set the texture minification filter
         }
     };
-    image.src = url;
+    image.src = url; // Set the image source to the given URL
 
     return texture;
 }
 
+// This function checks if a value is a power of 2
 function isPowerOf2(value) {
     return (value & (value - 1)) === 0;
 }
 
+// This function initializes the shader program
 function initShaderProgram(gl, vsSource, fsSource) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource); // Load and compile the vertex shader
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource); // Load and compile the fragment shader
 
-    const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
+    const shaderProgram = gl.createProgram(); // Create a shader program object
+    gl.attachShader(shaderProgram, vertexShader); // Attach the vertex shader to the shader program
+    gl.attachShader(shaderProgram, fragmentShader); // Attach the fragment shader to the shader program
+    gl.linkProgram(shaderProgram); // Link the shader program
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        console.error('Impossibile inizializzare il programma shader:', gl.getProgramInfoLog(shaderProgram));
+        console.error('Unable to initialize the shader program:', gl.getProgramInfoLog(shaderProgram)); // Log an error if the shader program failed to initialize
         return null;
     }
 
     return shaderProgram;
 }
 
+// This function loads and compiles a shader
 function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
+    const shader = gl.createShader(type); // Create a shader object
+    gl.shaderSource(shader, source); // Set the shader source code
+    gl.compileShader(shader); // Compile the shader
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error('Errore durante la compilazione del shader:', gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
+        console.error('Error compiling shader:', gl.getShaderInfoLog(shader)); // Log an error if the shader failed to compile
+        gl.deleteShader(shader); // Delete the shader object
         return null;
     }
 
     return shader;
 }
 
+// This function updates the orbit radius of Mercury
 function updateMercuryOrbitRadius(newRadius) {
-    mercuryOrbitRadius = newRadius;
-    drawScene();
+    mercuryOrbitRadius = newRadius; // Update the orbit radius of Mercury
+    drawScene(); // Redraw the scene
 }
 
-requestAnimationFrame(render);
+requestAnimationFrame(render); // Start the rendering loop
